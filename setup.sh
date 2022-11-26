@@ -64,13 +64,35 @@ $SUDO apt-get install -y certbot
 #     exit 1
 # fi
 
-# Prompt user for email address
-echo -e "${GREEN}Please enter an email address for LetsEncrypt${NC}"
-read EMAIL
+# Check if .env file exists and create it if it does not
+# If the .env file already exists, then read the values from it
+if [ -f .env ]; then
+    echo -e "${GREEN}.env file already exists${NC}"
+    . .env
+else
+    echo -e "${GREEN}.env file does not exist${NC}"
+    echo -e "${GREEN}Creating .env file for consecutive runs of this script${NC}"
+fi
 
-# Prompt user for domain name
-echo -e "${GREEN}Please enter a domain name for the TAK Server${NC}"
-read DOMAIN
+# Prompt user for their email address if it is not already set
+# If the email address is already set, then use it
+if [ -z "$EMAIL" ]; then
+    echo -e "${GREEN}Please enter your email address${NC}"
+    read EMAIL
+    echo "EMAIL=$EMAIL" >> .env
+else
+    echo -e "${GREEN}Email address is already set${NC}"
+fi
+
+# Prompt user for domain name if $DOMAIN is not set
+# If $DOMAIN is set, then use it
+if [ -z "$DOMAIN" ]; then
+    echo -e "${GREEN}Please enter a domain name${NC}"
+    read DOMAIN
+    echo "domain=$DOMAIN" >> .env
+else
+    echo -e "${GREEN}Using $DOMAIN as the domain name${NC}"
+fi
 
 # Check if domain name resolves to this server's WAN IP address
 echo -e "${GREEN}Checking if domain name resolves to this server's WAN IP address${NC}"
