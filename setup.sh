@@ -22,39 +22,100 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-# The file ".env" is used to store the environment variables entered by the user
-# Check if the file exists, if it does, read the variables from it
-# If it does not exist, create it
-if [ -f ".env" ]; then
-    echo -e "${GREEN}Reading environment variables from .env file${NC}"
-    source .env
-else
-    echo -e "${RED}No .env file found, creating one now${NC}"
+# Function to check .env file for required variables
+check_env() {
+  if [ -f .env ]; then
+    echo -e "${GREEN}Found .env file${NC}"
+  else
+    echo -e "${RED}Creating .env file${NC}"
     touch .env
-fi
+    fi
+}
 
-# Verify that this script is being run on Ubuntu 22.04 LTS and continue if it is
-if [ -f /etc/os-release ]; then
+# Function to verify that this script is being run on Ubuntu 22.04 LTS and continue if it is
+verify_os() {
+  if [ -f /etc/os-release ]; then
     . /etc/os-release
     if [ "$ID" = "ubuntu" ] && [ "$VERSION_ID" = "22.04" ]; then
-        echo -e "${GREEN}This script is being run on Ubuntu 22.04 LTS${NC}"
+      echo -e "${GREEN}Running on Ubuntu 22.04 LTS${NC}"
     else
-        echo -e "${RED}This script is not being run on Ubuntu 22.04 LTS${NC}"
-        exit 1
+      echo -e "${RED}This script is meant to be run on Ubuntu 22.04 LTS${NC}"
+      exit 1
     fi
-else
-    echo -e "${RED}This script is not being run on Ubuntu 22.04 LTS${NC}"
+  else
+    echo -e "${RED}Unable to determine OS${NC}"
     exit 1
-fi
+  fi
+}
 
-# Install docker and docker-compose
-echo -e "${GREEN}Installing docker and docker-compose${NC}"
-$SUDO apt-get update
-$SUDO apt-get install -y docker.io docker-compose
+# Function to perform initial system update
+update_system() {
+  echo -e "${GREEN}Updating system${NC}"
+  $SUDO apt update
+  $SUDO apt upgrade -y
+}
 
-# Install certbot using apt
-echo -e "${GREEN}Installing certbot${NC}"
-$SUDO apt-get install -y certbot
+
+
+
+# Function to check if docker and docker-compose are installed and install them if they are not
+install_docker  () {
+  if [ -x "$(command -v docker)" ]; then
+    echo -e "${GREEN}Docker is installed${NC}"
+  else
+    echo -e "${RED}Docker is not installed${NC}"
+    echo -e "${GREEN}Installing Docker${NC}"
+    $SUDO apt install docker.io -y
+    # Check if docker is installed and exit if it is not
+    if [ -x "$(command -v docker)" ]; then
+      echo -e "${GREEN}Docker installed successfully${NC}"
+    else
+      echo -e "${RED}Docker unable to be installed${NC}"
+      echo -e "${RED}Exiting${NC}"
+      exit 1
+    fi
+  fi
+
+  if [ -x "$(command -v docker-compose)" ]; then
+    echo -e "${GREEN}Docker Compose is installed${NC}"
+  else
+    echo -e "${RED}Docker Compose is not installed${NC}"
+    echo -e "${GREEN}Installing Docker Compose${NC}"
+    $SUDO apt install docker-compose -y
+    # Check if docker-compose is installed and exit if it is not
+    if [ -x "$(command -v docker-compose)" ]; then
+      echo -e "${GREEN}Docker Compose installed successfully${NC}"
+    else
+      echo -e "${RED}Docker Compose unable to be installed${NC}"
+      echo -e "${RED}Exiting${NC}"
+      exit 1
+    fi  
+  fi
+}
+
+
+# Function to check if certbot is installed and install it if it is not
+install_certbot () {
+  if [ -x "$(command -v certbot)" ]; then
+    echo -e "${GREEN}Certbot is installed${NC}"
+  else
+    echo -e "${RED}Certbot is not installed${NC}"
+    echo -e "${GREEN}Installing Certbot${NC}"
+    $SUDO apt install certbot -y
+    # Check if certbot is installed and exit if it is not
+    if [ -x "$(command -v certbot)" ]; then
+      echo -e "${GREEN}Certbot installed successfully${NC}"
+    else
+      echo -e "${RED}Certbot unable to be installed${NC}"
+      echo -e "${RED}Exiting${NC}"
+      exit 1
+    fi
+  fi
+}
+
+
+
+
 
 # TODO: Add firewall check and make sure that port 80 and 443 are open
 
@@ -75,90 +136,155 @@ $SUDO apt-get install -y certbot
 # fi
 
 
-# Prompt user for their email address if it is not already set
-# If the email address is already set, prompt the user to confirm that it is correct
-if [ -z "$EMAIL" ]; then
-    echo -e "${GREEN}Please enter your email address${NC}"
-    read EMAIL
-else
-    echo -e "${GREEN}Your email address is set to $EMAIL. Is this correct? (y/n)${NC}"
-    read CONFIRM_EMAIL
-    if [ "$CONFIRM_EMAIL" = "n" ]; then
-        echo -e "${GREEN}Please enter your email address${NC}"
-        read EMAIL
+# Function to check if email address is set in .env file and prompt for it if it is not
+# Save email address to .env file
+check_email () {
+  if grep -q "EMAIL=" .env; then
+    echo -e "${GREEN}Email address found in .env file${NC}"
+    # Read email address from .env file
+    EMAIL=$(grep -oP '(?<=EMAIL=).+' .env)
+    #Prompt the user to confirm the email address
+    read -p "Is this the correct email address? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      echo -e "${GREEN}Email address confirmed${NC}"
+      echo -e "${GREEN}Continuing${NC}"
+    else
+        # Prompt the user to enter a new email address
+        echo -e "${GREEN}Please enter a new email address${NC}"
+        read -p "Email Address: " email
+        # Save the email address to the .env file
+        echo "EMAIL=$email" > .env
+        echo -e "${GREEN}Email address saved to .env file${NC}"
     fi
-fi
-
-
-
-# Prompt user for domain name if $DOMAIN is not set
-# If $DOMAIN is set then prompt the user to confirm that it is correct
-if [ -z "$DOMAIN" ]; then
-    echo -e "${GREEN}Please enter your domain name${NC}"
-    read DOMAIN
-else
-    echo -e "${GREEN}Your domain name is set to $DOMAIN. Is this correct? (y/n)${NC}"
-    read CONFIRM_DOMAIN
-    if [ "$CONFIRM_DOMAIN" = "n" ]; then
-        echo -e "${GREEN}Please enter your domain name${NC}"
-        read DOMAIN
+    else
+        echo -e "${GREEN}Please enter an email address${NC}"
+        read -p "Email Address: " email
+        # Save the email address to the .env file
+        echo "EMAIL=$email" > .env
+        echo -e "${GREEN}Email address saved to .env file${NC}"
     fi
-fi
+}
 
 
-# Check if domain name resolves to this server's WAN IP address
-echo -e "${GREEN}Checking if domain name resolves to this server's WAN IP address${NC}"
-#Use dig to get the WAN IP address of this server
-WAN_IP=$(grep nameserver /etc/resolv.conf | awk '{print $2}' | xargs dig +short myip.opendns.com @)
-echo -e "${GREEN}WAN IP address is $WAN_IP${NC}"
-
-# Use dig to query OpenDNS for the IP address of the domain name entered by the user
-# Make sure that the domain name resolves to the WAN IP address of this server
-DOMAIN_IP=$(grep -m 1 -oP '(?<=IN\sA\s)\d+\.\d+\.\d+\.\d+' <(dig +short $DOMAIN @resolver1.opendns.com))
-# Display the IP address of the domain name
-echo -e "${GREEN}Domain name resolves to $DOMAIN_IP${NC}"
-
-# Compare the WAN IP address and the domain name IP address
-# If they are the same, continue
-# If they are not the same, display a warning and prompt the user to confirm that they want to continue
-if [ "$WAN_IP" = "$DOMAIN_IP" ]; then
-    echo -e "${GREEN}Domain name resolves to this server's WAN IP address${NC}"
-else
-    echo -e "${RED}Domain name does not resolve to this server's WAN IP address${NC}"
-    echo -e "${RED}Please make sure that your domain name is pointing to this server's WAN IP address${NC}"
-    echo -e "${RED}Do you want to continue? (y/n)${NC}"
-    read CONFIRM_DOMAIN_IP
-    if [ "$CONFIRM_DOMAIN_IP" = "n" ]; then
-        exit 1
+# Function to check if domain name is set in .env file and prompt for it if it is not
+# Save domain name to .env file
+check_domain () {
+  if grep -q "DOMAIN=" .env; then
+    echo -e "${GREEN}Domain name found in .env file${NC}"
+    # Read domain name from .env file
+    DOMAIN=$(grep -oP '(?<=DOMAIN=).+' .env)
+    #Prompt the user to confirm the domain name
+    read -p "Is this the correct domain name? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      echo -e "${GREEN}Domain name confirmed${NC}"
+      echo -e "${GREEN}Continuing${NC}"
+    else
+        # Prompt the user to enter a new domain name
+        echo -e "${GREEN}Please enter a new domain name${NC}"
+        read -p "Domain Name: " domain
+        # Save the domain name to the .env file
+        echo "DOMAIN=$domain" >> .env
+        echo -e "${GREEN}Domain name saved to .env file${NC}"
     fi
-fi
+    else
+        echo -e "${GREEN}Please enter a domain name${NC}"
+        read -p "Domain Name: " domain
+        # Save the domain name to the .env file
+        echo "DOMAIN=$domain" >> .env
+        echo -e "${GREEN}Domain name saved to .env file${NC}"
+    fi
+}
 
-# Do a dry run of certbot to verify that the dry run is successful
-# If successful, continue with the LetsEncrypt setup
-echo -e "${GREEN}Running a dry run of certbot to verify that the setup is successful${NC}"
-$SUDO certbot certonly --dry-run --standalone -d $DOMAIN -m $EMAIL --agree-tos
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}LetsEncrypt dry run was successful${NC}"
-    # Prompt the user if they would like to attempt to request a production certificate
-    echo -e "${GREEN}Would you like to request a production certificate?${NC}"
-    read -p "y/n: " PRODUCTION
-    if [ "$PRODUCTION" = "y" ]; then
-        echo -e "${GREEN}Requesting a production certificate${NC}"
-        $SUDO certbot certonly --standalone -d $DOMAIN -m $EMAIL --agree-tos
-        if [ $? -eq 0 ]; then
-            echo -e "${GREEN}Production certificate request was successful${NC}"
+
+
+# TODO: Add functionality to check if the domain name is valid
+
+
+
+# Function to attempt a dry run of certbot
+function dry_run_certbot {
+    echo -e "${GREEN}Attempting a dry run of certbot${NC}"
+    echo -e "${GREEN}This will not generate any certificates${NC}"
+    echo -e "${GREEN}This is just to make sure that everything is set up correctly${NC}"
+    $SUDO certbot certonly --dry-run --agree-tos --email $EMAIL -d $DOMAIN
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Dry run successful${NC}"
+        # Prompt the user to confirm that they want to create a certificate in the staging environment
+        # or the production environment.
+        # Select S for staging or P for production
+        read -p "Do you want to create a certificate in the staging environment or the production environment? (S/P) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Ss]$ ]]; then
+            # Call the staging_certbot function
+            staging_certbot
+        elif [[ $REPLY =~ ^[Pp]$ ]]; then
+            # Call the production_certbot function
+            production_certbot
         else
-            echo -e "${RED}Production certificate request was unsuccessful${NC}"
+            echo -e "${RED}Invalid option${NC}"
             echo -e "${RED}Exiting${NC}"
             exit 1
         fi
-    else
+
+
+
+# Function to create a certificate in the staging environment
+function staging_certbot {
+    echo -e "${GREEN}Creating certificate in the staging environment${NC}"
+    $SUDO certbot certonly --staging --agree-tos --email $EMAIL -d $DOMAIN
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Certificate created successfully${NC}"
+        # Display the location of the certificate and its details
+        echo -e "${GREEN}Certificate location:${NC}"
+        echo -e "${GREEN}/etc/letsencrypt/live/$DOMAIN${NC}"
+        echo -e "${GREEN}Certificate details:${NC}"
+        echo -e "${GREEN}$(openssl x509 -in /etc/letsencrypt/live/$DOMAIN/fullchain.pem -text -noout)${NC}"
+        # Prompt the user to confirm that they want to create a certificate in the production environment
+        read -p "Do you want to create a certificate in the production environment? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            # Call the production_certbot function
+            production_certbot
+        else
+            echo -e "${GREEN}Exiting${NC}"
+            exit 0
+        fi
+
+
+# Function to create a certificate in the production environment
+function production_certbot {
+    echo -e "${GREEN}Creating certificate in the production environment${NC}"
+    $SUDO certbot certonly --agree-tos --email $EMAIL -d $DOMAIN
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Certificate created successfully${NC}"
+        # Display the location of the certificate and its details
+        echo -e "${GREEN}Certificate location:${NC}"
+        echo -e "${GREEN}/etc/letsencrypt/live/$DOMAIN${NC}"
+        echo -e "${GREEN}Certificate details:${NC}"
+        echo -e "${GREEN}$(openssl x509 -in /etc/letsencrypt/live/$DOMAIN/fullchain.pem -text -noout)${NC}"
         echo -e "${GREEN}Exiting${NC}"
+        exit 0
+    else
+        echo -e "${RED}Certificate creation failed${NC}"
+        echo -e "${RED}Exiting${NC}"
         exit 1
     fi
-else
-    echo -e "${RED}LetsEncrypt setup is unsuccessful${NC}"
-    echo -e "${RED}Exiting${NC}"
-    exit 1
-fi
+}
 
+
+# The main function
+function main {
+   # Call the check_env function
+    check_env
+    # Call the check_email function
+    check_email
+    # Call the check_domain function
+    check_domain
+    # Call the dry_run_certbot function
+    dry_run_certbot
+}
+
+# Call the main function
+main
