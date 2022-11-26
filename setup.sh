@@ -79,7 +79,7 @@ WAN_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
 echo -e "${GREEN}WAN IP address is $WAN_IP${NC}"
 
 # Use dig to get the IP address of the domain name
-DOMAIN_IP=$(sed 's/.$//' <<< $(dig +short $DOMAIN)
+DOMAIN_IP=$(sed 's/.$//' <<< $(dig +short $DOMAIN))
 echo -e "${GREEN}Domain IP address is ${NC}$DOMAIN_IP"
 
 
