@@ -104,7 +104,7 @@ echo -e "${GREEN}WAN IP address is $WAN_IP${NC}"
 
 # Use dig to query OpenDNS for the IP address of the domain name entered by the user
 # Make sure that the domain name resolves to the WAN IP address of this server
-DOMAIN_IP=$(dig +short $DOMAIN | tail -n 1)
+DOMAIN_IP=$(dig +short $DOMAIN @resolver1.opendns.com | tail -n 1)
 # Display the IP address of the domain name
 echo -e "${GREEN}Domain name resolves to $DOMAIN_IP${NC}"
 
