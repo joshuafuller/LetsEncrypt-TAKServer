@@ -88,16 +88,15 @@ echo -e "${GREEN}Domain IP address is ${NC}$DOMAIN_IP"
 # If the user wants to continue, the script will continue
 # If the user does not want to continue, the script will exit
 if [ "$WAN_IP" != "$DOMAIN_IP" ]; then
-    echo -e "${RED}The domain name does not resolve to this server's WAN IP address${NC}"
+    echo -e "${RED}The domain name resolves to $DOMAIN_IP, which does not match $WAN_IP${NC}"
     echo -e "${RED}Please make sure that the domain name is pointing to this server's WAN IP address${NC}"
-    echo -e "${RED}Do you want to continue anyway? (y/n)${NC}"
+    echo -e "${RED}Do you want to continue? (y/n)${NC}"
     read CONTINUE
     if [ "$CONTINUE" != "y" ]; then
         echo -e "${RED}Exiting script${NC}"
         exit 1
     fi
 fi
-
 
 
 # Do a dry run of certbot to verify that the dry run is successful
