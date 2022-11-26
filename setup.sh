@@ -78,9 +78,9 @@ echo -e "${GREEN}Checking if domain name resolves to this server's WAN IP addres
 WAN_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
 echo -e "${GREEN}WAN IP address is $WAN_IP${NC}"
 
-# Query openDNS to get the IP address of the domain name
-DOMAIN_IP=$(dig +short $DOMAIN @resolver1.opendns.com)
-echo -e "${GREEN}Domain IP address is $DOMAIN_IP${NC}"
+# Use dig to get the IP address of the domain name
+DOMAIN_IP=$(sed 's/.$//' <<< $(dig +short $DOMAIN)
+echo -e "${GREEN}Domain IP address is ${NC}$DOMAIN_IP"
 
 
 # If the domain name does not resolve to this server's WAN IP address, prompt the user
@@ -105,7 +105,7 @@ fi
 echo -e "${GREEN}Running a dry run of certbot to verify that the setup is successful${NC}"
 $SUDO certbot certonly --dry-run --standalone -d $DOMAIN -m $EMAIL --agree-tos
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}LetsEncrypt setup is successful${NC}"
+    echo -e "${GREEN}LetsEncrypt dry run was successful${NC}"
     # Prompt the user if they would like to attempt to request a production certificate
     echo -e "${GREEN}Would you like to request a production certificate?${NC}"
     read -p "y/n: " PRODUCTION
