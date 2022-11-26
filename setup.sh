@@ -217,7 +217,7 @@ function dry_run_certbot () {
         # Prompt the user to confirm that they want to create a certificate in the staging environment
         # or the production environment.
         # Select S for staging or P for production
-        echo -e "Do you want to create a certificate in the staging environment or the production environment? (S/P) "
+        echo -e "Do you want to create a certificate in the staging environment or the production environment?"
         echo -e "Select staging if you are testing this script or if you are not sure what to do."
         echo -e "Select production if you are ready to create a certificate in the production environment."
         read -p "Staging or Production (S/P): " -n 1 -r
