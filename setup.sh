@@ -47,6 +47,57 @@ $SUDO apt-get install -y docker.io docker-compose
 echo -e "${GREEN}Installing certbot${NC}"
 $SUDO apt-get install -y certbot
 
+# Create the tak user and set the home directory
+echo -e "${GREEN}Creating tak user${NC}"
+$SUDO useradd -m -d /home/tak tak
+
+# Verify that the tak user was created and home directory was set
+if [ -d /home/tak ]; then
+    echo -e "${GREEN}tak user created and home directory set${NC}"
+else
+    echo -e "${RED}tak user was not created or home directory was not set${NC}"
+    exit 1
+fi
+
+# Install the the latest version of snapd
+echo -e "${GREEN}Installing snapd${NC}"
+$SUDO apt-get install -y snapd
+
+# Perform a snap refresh
+echo -e "${GREEN}Performing snap refresh${NC}"
+$SUDO snap refresh
+
+# Use snap to install the latest version of certbot
+echo -e "${GREEN}Installing certbot${NC}"
+$SUDO snap install --classic certbot
+
+# Verify that certbot was installed
+if [ -f /snap/bin/certbot ]; then
+    echo -e "${GREEN}certbot installed${NC}"
+else
+    echo -e "${RED}certbot was not installed${NC}"
+    exit 1
+fi
+
+# TODO: Add firewall check and make sure that port 80 and 443 are open
+
+# # Check if UFW is currently enabled and make sure that port 80 and 443 are open
+# echo -e "${GREEN}Checking if UFW is enabled and opening ports 80 and 443${NC}"
+# if [ -f /etc/default/ufw ]; then
+#     . /etc/default/ufw
+#     if [ "$IPV6" = "yes" ]; then
+#         $SUDO ufw allow 80/tcp
+#         $SUDO ufw allow 443/tcp
+#     else
+#         $SUDO ufw allow 80/tcp
+#         $SUDO ufw allow 443/tcp
+#     fi
+# else
+#     echo -e "${RED}UFW is not enabled${NC}"
+#     exit 1
+# fi
+
+
 # Prompt user for email address
 echo -e "${GREEN}Please enter an email address for LetsEncrypt${NC}"
 read EMAIL
@@ -74,8 +125,7 @@ else
     fi
 fi
 
-# Setup LetsEncrypt to do a dry run and get a certificate
-echo -e "${GREEN}Getting LetsEncrypt certificate${NC}"
-$SUDO certbot certonly --standalone --preferred-challenges http --email $EMAIL --agree-tos --no-eff-email --dry-run -d $DOMAIN
-
+# Do a dry run of certbot to verify that the domain name is valid and catch any other errors
+echo -e "${GREEN}Performing a dry run of certbot to verify that the domain name is valid${NC}"
+$SUDO certbot certonly --dry-run --standalone -m $EMAIL -d $DOMAIN
 
