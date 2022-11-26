@@ -183,16 +183,16 @@ check_domain() {
     else
         # Prompt the user to enter a new domain name
         echo -e "${GREEN}Please enter a new domain name${NC}"
-        read -p "Domain Name: " domain
+        read -p "Domain Name: " DOMAIN
         # Save the domain name to the .env file
-        echo "DOMAIN=$domain" >> .env
+        echo "DOMAIN=$DOMAIN" >> .env
         echo -e "${GREEN}Domain name saved to .env file${NC}"
     fi
     else
         echo -e "${GREEN}Please enter a domain name${NC}"
-        read -p "Domain Name: " domain
+        read -p "Domain Name: " DOMAIN
         # Save the domain name to the .env file
-        echo "DOMAIN=$domain" >> .env
+        echo "DOMAIN=$DOMAIN" >> .env
         echo -e "${GREEN}Domain name saved to .env file${NC}"
     fi
 }
