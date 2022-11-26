@@ -321,6 +321,72 @@ function setup_automatic_renewal() {
     fi
 }
 
+# Function to detect architecture, ARM vs AMD64
+function detect_architecture() {
+# TODO: Add functionality to detect architecture, ARM vs AMD64
+}
+
+# Function to check if required ports are being used by other services and prompt the user to stop them
+# Ports: 80,443,5432,8089,8443,8444,8446,9000,9001
+function check_ports() {
+ required_ports=(80 443 5432 8089 8443 8444 8446 9000 9001)
+ # Loop through the required ports, detect which are in use and prompt the user to kill the processes
+    for port in "${required_ports[@]}"; do
+    if [ $(netstat -tulpn | grep :$port | wc -l) -gt 0 ]; then
+    echo -e "${RED}Port $port is in use by the following process:${NC}"
+    echo -e "${RED}$(netstat -tulpn | grep :$port)${NC}"
+    echo -e "${RED}Would you like to kill the process?${NC}"
+    read -p "Kill process? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        # Loop through the processes and kill them while displaying the status of each process
+        for process in $(netstat -tulpn | grep :$port | awk '{print $7}' | awk -F"/" '{print $1}'); do
+            echo -e "${GREEN}Killing process $process${NC}"
+            $SUDO kill -9 $process
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}Process $process killed successfully${NC}"
+            else
+                echo -e "${RED}Process $process failed to kill${NC}"
+                echo -e "${RED}Exiting${NC}"
+                exit 1
+            fi
+        done
+    else
+        echo -e "${RED}Exiting${NC}"
+        exit 1
+    fi
+    fi
+    done
+}
+
+# Function to Check if the folder "tak" exists after previous install or attempt and remove it or leave it for the user to decide
+function check_tak_folder() {
+    if [ -d "$TAK_FOLDER" ]; then
+        echo -e "${RED}The folder $TAK_FOLDER already exists${NC}"
+        echo -e "${RED}Would you like to remove it?${NC}"
+        read -p "Remove folder? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${GREEN}Removing folder $TAK_FOLDER${NC}"
+            $SUDO rm -rf $TAK_FOLDER
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}Folder $TAK_FOLDER removed successfully${NC}"
+            else
+                echo -e "${RED}Folder $TAK_FOLDER failed to remove${NC}"
+                echo -e "${RED}Exiting${NC}"
+                exit 1
+            fi
+        else
+            echo -e "${RED}Exiting${NC}"
+            exit 1
+        fi
+    fi
+} 
+
+
+
+
+
 # Main program function
 function main {
     # Call the check_root function
