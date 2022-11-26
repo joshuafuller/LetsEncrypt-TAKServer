@@ -144,6 +144,7 @@ check_email() {
     # Read email address from .env file
     EMAIL=$(grep -oP '(?<=EMAIL=).+' .env)
     #Prompt the user to confirm the email address
+    echo -e "${GREEN}Email address is set to $EMAIL${NC}"
     read -p "Is this the correct email address? (y/n) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -175,6 +176,7 @@ check_domain() {
     # Read domain name from .env file
     DOMAIN=$(grep -oP '(?<=DOMAIN=).+' .env)
     #Prompt the user to confirm the domain name
+    echo -e "${GREEN}Domain name is set to $DOMAIN${NC}"
     read -p "Is this the correct domain name? (y/n) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
