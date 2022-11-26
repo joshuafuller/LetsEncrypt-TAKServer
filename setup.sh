@@ -208,7 +208,8 @@ function dry_run_certbot () {
     echo -e "${GREEN}Attempting a dry run of certbot${NC}"
     echo -e "${GREEN}This will not generate any certificates${NC}"
     echo -e "${GREEN}This is just to make sure that everything is set up correctly${NC}"
-    $SUDO certbot certonly --dry-run --agree-tos --email $EMAIL -d $DOMAIN
+    $SUDO certbot certonly --standalone --preferred-challenges http --email $EMAIL --agree-tos --dry-run -d $DOMAIN
+    # Check if the dry run was successful
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Dry run successful${NC}"
         # Prompt the user to confirm that they want to create a certificate in the staging environment
@@ -240,7 +241,7 @@ function dry_run_certbot () {
 # Function to create a certificate in the staging environment
 function staging_certbot() {
     echo -e "${GREEN}Creating certificate in the staging environment${NC}"
-    $SUDO certbot certonly --staging --agree-tos --email $EMAIL -d $DOMAIN
+    $SUDO certbot certonly --test-cert --standalone --preferred-challenges http --email $EMAIL --agree-tos -d $DOMAIN -n 
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Certificate created successfully${NC}"
         # Display the location of the certificate and its details
@@ -267,10 +268,10 @@ function staging_certbot() {
 
 
 
-# Function to create a certificate in the production environment
+# Function to create a certificate in the production environment and set up automatic renewal
 function production_certbot() {
     echo -e "${GREEN}Creating certificate in the production environment${NC}"
-    $SUDO certbot certonly --agree-tos --email $EMAIL -d $DOMAIN
+    $SUDO certbot certonly --standalone --preferred-challenges http --email $EMAIL --agree-tos -d $DOMAIN -n 
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Certificate created successfully${NC}"
         # Display the location of the certificate and its details
@@ -278,8 +279,16 @@ function production_certbot() {
         echo -e "${GREEN}/etc/letsencrypt/live/$DOMAIN${NC}"
         echo -e "${GREEN}Certificate details:${NC}"
         echo -e "${GREEN}$(openssl x509 -in /etc/letsencrypt/live/$DOMAIN/fullchain.pem -text -noout)${NC}"
-        echo -e "${GREEN}Exiting${NC}"
-        exit 0
+        # Prompt the user to confirm that they want to set up automatic renewal
+        read -p "Do you want to set up automatic renewal? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            # Call the setup_automatic_renewal function
+            setup_automatic_renewal
+        else
+            echo -e "${GREEN}Exiting${NC}"
+            exit 0
+        fi
     else
         echo -e "${RED}Certificate creation failed${NC}"
         echo -e "${RED}Exiting${NC}"
@@ -287,6 +296,25 @@ function production_certbot() {
     fi
 }
 
+# Function to set up automatic renewal
+function setup_automatic_renewal() {
+    echo -e "${GREEN}Setting up automatic renewal${NC}"
+    # Create a cron job to renew the certificate
+    $SUDO crontab -l > mycron
+    echo "0 0 * * * $SUDO certbot renew --quiet --no-self-upgrade" >> mycron
+    $SUDO crontab mycron
+    $SUDO rm mycron
+    # Check if the cron job was created successfully
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Automatic renewal set up successfully${NC}"
+        echo -e "${GREEN}Exiting${NC}"
+        exit 0
+    else
+        echo -e "${RED}Automatic renewal set up failed${NC}"
+        echo -e "${RED}Exiting${NC}"
+        exit 1
+    fi
+}
 
 # Main program function
 function main {
