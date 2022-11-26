@@ -42,38 +42,9 @@ echo -e "${GREEN}Installing docker and docker-compose${NC}"
 $SUDO apt-get update
 $SUDO apt-get install -y docker.io docker-compose
 
-
-# Create the tak user and set the home directory
-echo -e "${GREEN}Creating tak user${NC}"
-$SUDO useradd -m -d /home/tak tak
-
-# Verify that the tak user was created and home directory was set
-if [ -d /home/tak ]; then
-    echo -e "${GREEN}tak user created and home directory set${NC}"
-else
-    echo -e "${RED}tak user was not created or home directory was not set${NC}"
-    exit 1
-fi
-
-# Install the the latest version of snapd
-echo -e "${GREEN}Installing snapd${NC}"
-$SUDO apt-get install -y snapd
-
-# Perform a snap refresh
-echo -e "${GREEN}Performing snap refresh${NC}"
-$SUDO snap refresh
-
-# Use snap to install the latest version of certbot
+# Install certbot using apt
 echo -e "${GREEN}Installing certbot${NC}"
-$SUDO snap install --classic certbot
-
-# Verify that certbot was installed
-if [ -f /snap/bin/certbot ]; then
-    echo -e "${GREEN}certbot installed${NC}"
-else
-    echo -e "${RED}certbot was not installed${NC}"
-    exit 1
-fi
+$SUDO apt-get install -y certbot
 
 # TODO: Add firewall check and make sure that port 80 and 443 are open
 
@@ -92,7 +63,6 @@ fi
 #     echo -e "${RED}UFW is not enabled${NC}"
 #     exit 1
 # fi
-
 
 # Prompt user for email address
 echo -e "${GREEN}Please enter an email address for LetsEncrypt${NC}"
