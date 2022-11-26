@@ -10,7 +10,6 @@
 # TODO: Add functionality to allow uploading to TAK Docker Image through secure HTTPS
 # connection using LetsEncrypt certificates and authentication
 
-
 # Detect if sudo is required and adjust the command accordingly
 if [ "$EUID" -ne 0 ]
   then SUDO=sudo
@@ -22,6 +21,17 @@ fi
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
+
+# The file ".env" is used to store the environment variables entered by the user
+# Check if the file exists, if it does, read the variables from it
+# If it does not exist, create it
+if [ -f ".env" ]; then
+    echo -e "${GREEN}Reading environment variables from .env file${NC}"
+    source .env
+else
+    echo -e "${RED}No .env file found, creating one now${NC}"
+    touch .env
+fi
 
 # Verify that this script is being run on Ubuntu 22.04 LTS and continue if it is
 if [ -f /etc/os-release ]; then
@@ -108,19 +118,19 @@ DOMAIN_IP=$(dig +short $DOMAIN @resolver1.opendns.com | head -n1 | tr -d '\r')
 # Display the IP address of the domain name
 echo -e "${GREEN}Domain name resolves to $DOMAIN_IP${NC}"
 
-# Compare $DOMAIN_IP to $WAN_IP and make sure that they are the same
-# If they are not the same, display a warning to the user and prompt 
-# them to confirm that they want to continue
+# Use grep to sanitize $DOMAIN_IP and $WAN_IP
+# If the domain name resolves to the WAN IP address of this server, then continue
+$DOMAIN_IP=$(echo $DOMAIN_IP | grep -Eo "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
+$WAN_IP=$(echo $WAN_IP | grep -Eo "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
 if [ "$DOMAIN_IP" = "$WAN_IP" ]; then
-    echo -e "${GREEN}$DOMAIN resolves to this server's WAN IP: $WAN_IP${NC}"
+    echo -e "${GREEN}Domain name resolves to this server's WAN IP address${NC}"
+    echo -e "${GREEN}Continuing...${NC}"
 else
-    echo -e "${RED}$DOMAIN does not resolve to this server's WAN IP: $WAN_IP${NC}"
-    echo -e "${GREEN}Do you want to continue? (y/n)${NC}"
-    read CONFIRM_DOMAIN
-    if [ "$CONFIRM_DOMAIN" = "n" ]; then
-        exit 1
-    fi
+    echo -e "${RED}Domain name does not resolve to this server's WAN IP address${NC}"
+    exit 1
 fi
+
+
 
 # Do a dry run of certbot to verify that the dry run is successful
 # If successful, continue with the LetsEncrypt setup
