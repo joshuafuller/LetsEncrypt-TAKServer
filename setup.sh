@@ -94,7 +94,32 @@ else
 fi
 
 
-# Do a dry run of certbot to verify that the domain name is valid and catch any other errors
-echo -e "${GREEN}Performing a dry run of certbot to verify that the domain name is valid${NC}"
-$SUDO certbot certonly --dry-run --standalone -m $EMAIL -d $DOMAIN
+# Do a dry run of certbot to verify that the dry run is successful
+# If successful, continue with the LetsEncrypt setup
+echo -e "${GREEN}Running a dry run of certbot to verify that the setup is successful${NC}"
+$SUDO certbot certonly --dry-run --standalone -d $DOMAIN -m $EMAIL --agree-tos
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}LetsEncrypt setup is successful${NC}"
+    # Prompt the user if they would like to attempt to request a production certificate
+    echo -e "${GREEN}Would you like to request a production certificate?${NC}"
+    read -p "y/n: " PRODUCTION
+    if [ "$PRODUCTION" = "y" ]; then
+        echo -e "${GREEN}Requesting a production certificate${NC}"
+        $SUDO certbot certonly --standalone -d $DOMAIN -m $EMAIL --agree-tos
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}Production certificate request was successful${NC}"
+        else
+            echo -e "${RED}Production certificate request was unsuccessful${NC}"
+            echo -e "${RED}Exiting${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${GREEN}Exiting${NC}"
+        exit 1
+    fi
+else
+    echo -e "${RED}LetsEncrypt setup is unsuccessful${NC}"
+    echo -e "${RED}Exiting${NC}"
+    exit 1
+fi
 
