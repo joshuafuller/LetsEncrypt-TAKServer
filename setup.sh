@@ -59,7 +59,7 @@ update_system() {
 
 
 # Function to check if docker and docker-compose are installed and install them if they are not
-install_docker  () {
+install_docker() {
   if [ -x "$(command -v docker)" ]; then
     echo -e "${GREEN}Docker is installed${NC}"
   else
@@ -95,7 +95,7 @@ install_docker  () {
 
 
 # Function to check if certbot is installed and install it if it is not
-install_certbot () {
+install_certbot() {
   if [ -x "$(command -v certbot)" ]; then
     echo -e "${GREEN}Certbot is installed${NC}"
   else
@@ -138,7 +138,7 @@ install_certbot () {
 
 # Function to check if email address is set in .env file and prompt for it if it is not
 # Save email address to .env file
-check_email () {
+check_email() {
   if grep -q "EMAIL=" .env; then
     echo -e "${GREEN}Email address found in .env file${NC}"
     # Read email address from .env file
@@ -169,7 +169,7 @@ check_email () {
 
 # Function to check if domain name is set in .env file and prompt for it if it is not
 # Save domain name to .env file
-check_domain () {
+check_domain() {
   if grep -q "DOMAIN=" .env; then
     echo -e "${GREEN}Domain name found in .env file${NC}"
     # Read domain name from .env file
@@ -204,7 +204,7 @@ check_domain () {
 
 
 # Function to attempt a dry run of certbot
-function dry_run_certbot {
+function dry_run_certbot () {   
     echo -e "${GREEN}Attempting a dry run of certbot${NC}"
     echo -e "${GREEN}This will not generate any certificates${NC}"
     echo -e "${GREEN}This is just to make sure that everything is set up correctly${NC}"
@@ -227,11 +227,18 @@ function dry_run_certbot {
             echo -e "${RED}Exiting${NC}"
             exit 1
         fi
+    else
+        echo -e "${RED}Dry run failed${NC}"
+        echo -e "${RED}Exiting${NC}"
+        exit 1
+    fi  
+}
+
 
 
 
 # Function to create a certificate in the staging environment
-function staging_certbot {
+function staging_certbot() {
     echo -e "${GREEN}Creating certificate in the staging environment${NC}"
     $SUDO certbot certonly --staging --agree-tos --email $EMAIL -d $DOMAIN
     if [ $? -eq 0 ]; then
@@ -251,10 +258,17 @@ function staging_certbot {
             echo -e "${GREEN}Exiting${NC}"
             exit 0
         fi
+    else
+        echo -e "${RED}Certificate creation failed${NC}"
+        echo -e "${RED}Exiting${NC}"
+        exit 1
+    fi
+}
+
 
 
 # Function to create a certificate in the production environment
-function production_certbot {
+function production_certbot() {
     echo -e "${GREEN}Creating certificate in the production environment${NC}"
     $SUDO certbot certonly --agree-tos --email $EMAIL -d $DOMAIN
     if [ $? -eq 0 ]; then
@@ -273,12 +287,22 @@ function production_certbot {
     fi
 }
 
-# Call the check_root function
-check_env
-# Call the check_email function
-check_email
-# Call the check_domain function
-check_domain
-# Call the dry_run_certbot function
-dry_run_certbot
 
+# Main program function
+function main {
+    # Call the check_root function
+    check_root
+    # Call the check_sudo function
+    check_sudo
+    # Call the check_env function
+    check_env
+    # Call the check_email function
+    check_email
+    # Call the check_domain function
+    check_domain
+    # Call the dry_run_certbot function
+    dry_run_certbot
+}
+
+# Call the main function
+main
