@@ -99,20 +99,14 @@ fi
 # Check if domain name resolves to this server's WAN IP address
 echo -e "${GREEN}Checking if domain name resolves to this server's WAN IP address${NC}"
 #Use dig to get the WAN IP address of this server
-WAN_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
+WAN_IP=$(dig +short myip.opendns.com @resolver1.opendns.com | head -n1 | tr -d '\r')
 echo -e "${GREEN}WAN IP address is $WAN_IP${NC}"
 
 # Use dig to query OpenDNS for the IP address of the domain name entered by the user
 # Make sure that the domain name resolves to the WAN IP address of this server
-DOMAIN_IP=$(dig +short $DOMAIN @resolver1.opendns.com | tail -n 1)
+DOMAIN_IP=$(dig +short $DOMAIN @resolver1.opendns.com | head -n1 | tr -d '\r')
 # Display the IP address of the domain name
 echo -e "${GREEN}Domain name resolves to $DOMAIN_IP${NC}"
-
-if [ "$DOMAIN_IP" = "$WAN_IP" ]; then
-    echo -e "${GREEN}$DOMAIN resolves to this server's WAN IP: $WAN_IP${NC}"
-    echo -e "${RED}$DOMAIN does not resolve to this server's WAN IP: $WAN_IP${NC}"
-    exit 1
-fi
 
 # Compare $DOMAIN_IP to $WAN_IP and make sure that they are the same
 # If they are not the same, display a warning to the user and prompt 
