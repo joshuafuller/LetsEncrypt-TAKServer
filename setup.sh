@@ -383,9 +383,14 @@ function check_tak_folder() {
     fi
 } 
 
+# TODO: Function to spawn https web server on port 12345
+# It will utilize the certificate created by certbot
+# It will be used to upload the TAK files to the server
 
-
-
+# TODO: Function to check TAK image file with known good hashs
+function check_tak_image() { 
+    echo -e "${GREEN}Checking TAK image file${NC}"
+}
 
 # Main program function
 function main {
