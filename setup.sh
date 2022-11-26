@@ -43,10 +43,6 @@ $SUDO apt-get update
 $SUDO apt-get install -y docker.io docker-compose
 
 
-# Install certbot
-echo -e "${GREEN}Installing certbot${NC}"
-$SUDO apt-get install -y certbot
-
 # Create the tak user and set the home directory
 echo -e "${GREEN}Creating tak user${NC}"
 $SUDO useradd -m -d /home/tak tak
