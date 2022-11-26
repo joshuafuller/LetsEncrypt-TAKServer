@@ -273,18 +273,12 @@ function production_certbot {
     fi
 }
 
+# Call the check_root function
+check_env
+# Call the check_email function
+check_email
+# Call the check_domain function
+check_domain
+# Call the dry_run_certbot function
+dry_run_certbot
 
-# The main function
-function main {
-   # Call the check_env function
-    check_env
-    # Call the check_email function
-    check_email
-    # Call the check_domain function
-    check_domain
-    # Call the dry_run_certbot function
-    dry_run_certbot
-}
-
-# Call the main function
-main
