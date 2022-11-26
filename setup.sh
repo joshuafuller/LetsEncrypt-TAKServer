@@ -109,28 +109,29 @@ fi
 # Check if domain name resolves to this server's WAN IP address
 echo -e "${GREEN}Checking if domain name resolves to this server's WAN IP address${NC}"
 #Use dig to get the WAN IP address of this server
-WAN_IP=$(dig +short myip.opendns.com @resolver1.opendns.com | head -n1 | tr -d '\r')
+WAN_IP=$(grep nameserver /etc/resolv.conf | awk '{print $2}' | xargs dig +short myip.opendns.com @)
 echo -e "${GREEN}WAN IP address is $WAN_IP${NC}"
 
 # Use dig to query OpenDNS for the IP address of the domain name entered by the user
 # Make sure that the domain name resolves to the WAN IP address of this server
-DOMAIN_IP=$(dig +short $DOMAIN @resolver1.opendns.com | head -n1 | tr -d '\r')
+DOMAIN_IP=$(grep -m 1 -oP '(?<=IN\sA\s)\d+\.\d+\.\d+\.\d+' <(dig +short $DOMAIN @resolver1.opendns.com))
 # Display the IP address of the domain name
 echo -e "${GREEN}Domain name resolves to $DOMAIN_IP${NC}"
 
-# Use grep to sanitize $DOMAIN_IP and $WAN_IP
-# If the domain name resolves to the WAN IP address of this server, then continue
-$DOMAIN_IP=$(echo $DOMAIN_IP | grep -Eo "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
-$WAN_IP=$(echo $WAN_IP | grep -Eo "([0-9]{1,3}[\.]){3}[0-9]{1,3}")
-if [ "$DOMAIN_IP" = "$WAN_IP" ]; then
+# Compare the WAN IP address and the domain name IP address
+# If they are the same, continue
+# If they are not the same, display a warning and prompt the user to confirm that they want to continue
+if [ "$WAN_IP" = "$DOMAIN_IP" ]; then
     echo -e "${GREEN}Domain name resolves to this server's WAN IP address${NC}"
-    echo -e "${GREEN}Continuing...${NC}"
 else
     echo -e "${RED}Domain name does not resolve to this server's WAN IP address${NC}"
-    exit 1
+    echo -e "${RED}Please make sure that your domain name is pointing to this server's WAN IP address${NC}"
+    echo -e "${RED}Do you want to continue? (y/n)${NC}"
+    read CONFIRM_DOMAIN_IP
+    if [ "$CONFIRM_DOMAIN_IP" = "n" ]; then
+        exit 1
+    fi
 fi
-
-
 
 # Do a dry run of certbot to verify that the dry run is successful
 # If successful, continue with the LetsEncrypt setup
