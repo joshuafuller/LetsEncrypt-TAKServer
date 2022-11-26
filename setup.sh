@@ -152,16 +152,16 @@ check_email() {
     else
         # Prompt the user to enter a new email address
         echo -e "${GREEN}Please enter a new email address${NC}"
-        read -p "Email Address: " email
+        read -p "Email Address: " EMAIL
         # Save the email address to the .env file
-        echo "EMAIL=$email" > .env
+        echo "EMAIL=$EMAIL" > .env
         echo -e "${GREEN}Email address saved to .env file${NC}"
     fi
     else
         echo -e "${GREEN}Please enter an email address${NC}"
-        read -p "Email Address: " email
+        read -p "Email Address: " EMAIL
         # Save the email address to the .env file
-        echo "EMAIL=$email" > .env
+        echo "EMAIL=$EMAIL" > .env
         echo -e "${GREEN}Email address saved to .env file${NC}"
     fi
 }
