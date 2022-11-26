@@ -76,22 +76,28 @@ read DOMAIN
 echo -e "${GREEN}Checking if domain name resolves to this server's WAN IP address${NC}"
 #Use dig to get the WAN IP address of this server
 WAN_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
-DOMAIN_IP=$(dig +short $DOMAIN)
-if [ "$WAN_IP" = "$DOMAIN_IP" ]; then
-    echo -e "${GREEN}$DOMAIN resolves to $WAN_IP${NC}"
-    echo -e "${GREEN}Continuing with LetsEncrypt setup${NC}"
-else
-    echo -e "${RED}$DOMAIN does not resolve to $WAN_IP${NC}"
-    echo -e "${RED}Please make sure that $DOMAIN resolves to $WAN_IP${NC}"
-    echo -e "${RED}Would you like to continue with LetsEncrypt anyway?${NC}"
-    read -p "y/n: " CONTINUE
-    if [ "$CONTINUE" = "y" ]; then
-        echo -e "${GREEN}Continuing with LetsEncrypt setup${NC}"
-    else
-        echo -e "${RED}Exiting${NC}"
+echo -e "${GREEN}WAN IP address is $WAN_IP${NC}"
+
+# Query openDNS to get the IP address of the domain name
+DOMAIN_IP=$(dig +short $DOMAIN @resolver1.opendns.com)
+echo -e "${GREEN}Domain IP address is $DOMAIN_IP${NC}"
+
+
+# If the domain name does not resolve to this server's WAN IP address, prompt the user
+# to make sure that the domain name is pointing to this server's WAN IP address
+# If the user wants to continue, the script will continue
+# If the user does not want to continue, the script will exit
+if [ "$WAN_IP" != "$DOMAIN_IP" ]; then
+    echo -e "${RED}The domain name does not resolve to this server's WAN IP address${NC}"
+    echo -e "${RED}Please make sure that the domain name is pointing to this server's WAN IP address${NC}"
+    echo -e "${RED}Do you want to continue anyway? (y/n)${NC}"
+    read CONTINUE
+    if [ "$CONTINUE" != "y" ]; then
+        echo -e "${RED}Exiting script${NC}"
         exit 1
     fi
 fi
+
 
 
 # Do a dry run of certbot to verify that the dry run is successful
