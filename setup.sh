@@ -78,18 +78,21 @@ echo -e "${GREEN}Checking if domain name resolves to this server's WAN IP addres
 WAN_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
 DOMAIN_IP=$(dig +short $DOMAIN)
 if [ "$WAN_IP" = "$DOMAIN_IP" ]; then
-    echo -e "${GREEN}Domain name resolves to this server's WAN IP address${NC}"
+    echo -e "${GREEN}$DOMAIN resolves to $WAN_IP${NC}"
+    echo -e "${GREEN}Continuing with LetsEncrypt setup${NC}"
 else
-    echo -e "${RED}Domain name does not resolve to this server's WAN IP address${NC}"
-    echo -e "${RED}Please check you have entered the correct domain name${NC}"
-    echo -e "${RED}and that the domain name is pointing to this server's WAN IP address${NC}"
-    # Prompt user to continue anyway
-    echo -e "${GREEN}Do you want to continue anyway?${NC}"
-    read -p "Enter y to continue or n to exit: " CONTINUE
-    if [ "$CONTINUE" = "n" ]; then
+    echo -e "${RED}$DOMAIN does not resolve to $WAN_IP${NC}"
+    echo -e "${RED}Please make sure that $DOMAIN resolves to $WAN_IP${NC}"
+    echo -e "${RED}Would you like to continue with LetsEncrypt anyway?${NC}"
+    read -p "y/n: " CONTINUE
+    if [ "$CONTINUE" = "y" ]; then
+        echo -e "${GREEN}Continuing with LetsEncrypt setup${NC}"
+    else
+        echo -e "${RED}Exiting${NC}"
         exit 1
     fi
 fi
+
 
 # Do a dry run of certbot to verify that the domain name is valid and catch any other errors
 echo -e "${GREEN}Performing a dry run of certbot to verify that the domain name is valid${NC}"
