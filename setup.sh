@@ -105,13 +105,14 @@ echo -e "${GREEN}WAN IP address is $WAN_IP${NC}"
 # Use dig to query OpenDNS for the IP address of the domain name entered by the user
 # Make sure that the domain name resolves to the WAN IP address of this server
 DOMAIN_IP=$(dig +short $DOMAIN | tail -n 1)
+# Display the IP address of the domain name
+echo -e "${GREEN}Domain name resolves to $DOMAIN_IP${NC}"
+
 if [ "$DOMAIN_IP" = "$WAN_IP" ]; then
-    echo -e "${GREEN}Domain name resolves to this server's WAN IP address${NC}"
-else
-    echo -e "${RED}Domain name does not resolve to this server's WAN IP address${NC}"
+    echo -e "${GREEN}$DOMAIN resolves to this server's WAN IP: $WAN_IP${NC}"
+    echo -e "${RED}$DOMAIN does not resolve to this server's WAN IP: $WAN_IP${NC}"
     exit 1
 fi
-
 
 # If the domain name does not resolve to this server's WAN IP address, prompt the user
 # to make sure that the domain name is pointing to this server's WAN IP address
